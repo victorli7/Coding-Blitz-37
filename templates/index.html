@@ -1,260 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Your New Flask App</title>
-
-  <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Almarai:wght@800&amp;family=Nunito+Sans&amp;display=swap" />
-</head>
-
-<body>
-  <div class="container">
-    <div class="content">
-      <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOS4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjY3IDE3NS4yIDE3Ni40IDE3Ni41IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDY3IDE3NS4yIDE3Ni40IDE3Ni41OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+DQo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPg0KCS5zdDB7ZmlsbDojRkZGRkZGO30NCjwvc3R5bGU+DQo8ZyBpZD0iWE1MSURfMjI5XyI+DQoJPGcgaWQ9IlhNTElEXzY5MF8iPg0KCQk8ZyBpZD0iWE1MSURfNjkxXyI+DQoJCQk8Zz4NCgkJCQk8ZyBpZD0iWE1MSURfNDRfIj4NCgkJCQkJPGcgaWQ9IlhNTElEXzQ4XyI+DQoJCQkJCQk8cGF0aCBpZD0iWE1MSURfNDlfIiBjbGFzcz0ic3QwIiBkPSJNMTU1LjIsMzUxLjd2LTM0LjJjMzYuMiwwLDY0LjMtMzUuOSw1MC40LTc0Yy01LjEtMTQuMS0xNi40LTI1LjQtMzAuNS0zMC41DQoJCQkJCQkJYy0zOC4xLTEzLjgtNzQsMTQuMi03NCw1MC40bDAsMEg2N2MwLTU3LjcsNTUuOC0xMDIuNywxMTYuMy04My44YzI2LjQsOC4zLDQ3LjUsMjkuMyw1NS43LDU1LjcNCgkJCQkJCQlDMjU3LjksMjk1LjksMjEzLDM1MS43LDE1NS4yLDM1MS43eiIvPg0KCQkJCQk8L2c+DQoJCQkJCTxwb2x5Z29uIGlkPSJYTUxJRF80N18iIGNsYXNzPSJzdDAiIHBvaW50cz0iMTU1LjMsMzE3LjYgMTIxLjMsMzE3LjYgMTIxLjMsMjgzLjYgMTIxLjMsMjgzLjYgMTU1LjMsMjgzLjYgMTU1LjMsMjgzLjYgCQkJCQkNCgkJCQkJCSIvPg0KCQkJCQk8cG9seWdvbiBpZD0iWE1MSURfNDZfIiBjbGFzcz0ic3QwIiBwb2ludHM9IjEyMS4zLDM0My44IDk1LjEsMzQzLjggOTUuMSwzNDMuOCA5NS4xLDMxNy42IDEyMS4zLDMxNy42IAkJCQkJIi8+DQoJCQkJCTxwYXRoIGlkPSJYTUxJRF80NV8iIGNsYXNzPSJzdDAiIGQ9Ik05NS4xLDMxNy42SDczLjJsMCwwdi0yMS45bDAsMGgyMS45bDAsMFYzMTcuNnoiLz4NCgkJCQk8L2c+DQoJCQk8L2c+DQoJCTwvZz4NCgk8L2c+DQo8L2c+DQo8L3N2Zz4NCg==" alt="DigitalOcean Logo" width="100" />
-      <h1>Welcome to your new <a href="https://flask.palletsprojects.com/en/1.1.x/">Flask App</a>!</h1>
-
-      <p>
-        This application is an example of how to deploy a Flask Application to DigitalOcean's App
-        Platform. Check out their <a href="https://flask.palletsprojects.com/en/1.1.x/quickstart/">documentation</a> to
-        learn more about flask.
-      </p>
-
-    </div>
-
-    <div class="links">
-      <a href="https://github.com/MasonEgger/python-slackbot-sampleapp" target="_blank"
-        rel="noopener noreferrer"><strong>Sample Slackbot using Flask</strong>
-        <span>Learn how to build a Slackbot in Python</span>
-      </a>
-      <a href="https://www.digitalocean.com/docs/app-platform/languages-frameworks/python/" target="_blank"
-        rel="noopener noreferrer"><strong>DigitalOcean App Platform Docs for Flask</strong>
-        <span>DigitalOcean's reference documentation for Flask</span>
-      </a>
-      <a href="https://www.digitalocean.com/docs/app-platform/" target="_blank" rel="noopener noreferrer"><strong>App
-          Platform Documentation</strong><span>Learn about DigitalOcean's App Platform</span></a>
-      <a href="https://www.digitalocean.com/docs/droplets/how-to/" target="_blank" rel="noopener noreferrer"><strong>App
-          Platform API Documentation</strong>
-        <span>REST API Documentation for App Platform</span>
-      </a>
-    </div>
-  </div>
-
-  <div id="stripes">
-    <span></span>
-    <span></span>
-    <span></span>
-    <span></span>
-    <span></span>
-  </div>
-
+  <title>Feature Flags API Playground</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
-      padding: 50px;
-      min-height: 100vh;
-      position: relative;
-      color: #fff;
-      font-family: "Nunito Sans", sans-serif;
-      font-size: 19px;
+      font-family: system-ui, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      line-height: 1.5;
     }
-
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-      font-family: "Almarai", sans-serif;
-    }
-
-    :root {
-      --background: linear-gradient(150deg,
-          #17acff 15%,
-          #016aff 70%,
-          #68a6ff 94%);
-      --first: #53f;
-      --second: #4553ff;
-      --third: #4f40ff;
-      --fourth: #25ddf5;
-      --fifth: #1fa2ff;
-    }
-
-    #stripes {
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: -1;
-      width: 100%;
-      height: 100vw;
-      display: grid;
-      background: var(--background);
-      grid-template-columns: repeat(6, 1fr);
-      grid-template-rows: repeat(4, 1fr);
-      transform: skewY(-12deg);
-      transform-origin: 0;
-    }
-
-    #stripes span {
-      /* border: 1px solid #c00c00; */
-    }
-
-    #stripes span:first-child {
-      grid-column: span 1;
-      background: var(--first);
-    }
-
-    #stripes span:nth-child(2) {
-      grid-column: span 2;
-      background: var(--second);
-    }
-
-    #stripes span:nth-child(3) {
-      grid-column: span 2;
-      background: var(--third);
-    }
-
-    #stripes span:nth-child(4) {
-      grid-column: 6;
-      grid-row: 3;
-      background: var(--fourth);
-    }
-
-    #stripes span:nth-child(5) {
-      grid-column: span 2;
-      grid-row: 4;
-      background: var(--fifth);
-    }
-
-    .container {
-      max-width: 800px;
+    main {
+      max-width: 720px;
       margin: 0 auto;
-      padding: 50px 0;
+      padding: 2rem 1rem 3rem;
     }
-
-    .content {
-      text-align: center;
+    h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
+    .subtitle { color: #94a3b8; margin: 0 0 2rem; font-size: 0.95rem; }
+    section {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
     }
-
-    h1 {
-      font-size: 2.5rem;
-    }
-
-    h1 a {
-      color: #dbf1f5;
-    }
-
-    h1 a:hover {
-      color: #7decff;
-    }
-
-    p {
-      margin-bottom: 50px;
-    }
-     p a {
-      color:chartreuse;
-    }
-    
-    li {
-      text-align: left
-    }
-
-    code {
-      display: inline-block;
-      padding: 3px 6px;
-      margin-left: 3px;
-      margin-right: 3px;
-      border-radius: 5px;
-      font-size: 0.8rem;
-      background: #1a2279;
-      color: #dbf1f5;
-    }
-
-    .links {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-
-    .links a {
-      position: relative;
-      display: block;
-      background: rgba(255, 255, 255, 0.85);
-      border-radius: 5px;
-      padding: 20px;
-      font-size: 1.1rem;
-      text-decoration: none;
-      color: #222;
-      transition: 0.3s ease all;
-      overflow: hidden;
-    }
-
-    .links a:before,
-    .links a:after {
-      font-size: 40px;
-      display: block;
-      position: absolute;
-    }
-
-    .links a:before {
-      content: "";
-      top: -80%;
-      right: -150px;
-      width: 250px;
-      height: 250px;
-      background: rgba(125, 236, 255, 0.6);
-      pointer-events: none;
-      transform: rotate(-25deg);
-      transition: 0.4s cubic-bezier(0.34, 0.31, 0, 1.81) transform;
-    }
-
-    .links a:after {
-      content: "👉";
-      top: 0;
-      bottom: 0;
-      display: flex;
-      align-items: center;
-      right: 30px;
-      transform: translateX(80px);
-      transition: 0.3s cubic-bezier(0.34, 0.31, 0, 1.81) transform;
-    }
-
-    .links a:hover {
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
-    }
-
-    .links a:hover:before {
-      transform: rotate(-25deg) translateX(60px);
-    }
-
-    .links a:hover:after {
-      transform: none;
-    }
-
-    .links a strong,
-    .links a span {
-      position: relative;
-      z-index: 1;
-    }
-
-    .links a strong {
-      font-weight: bold;
-      display: block;
-      margin-bottom: 5px;
-    }
-
-    .links a span {
-      color: #787878;
+    h2 { margin: 0 0 0.75rem; font-size: 1rem; color: #cbd5e1; }
+    p { margin: 0 0 0.75rem; font-size: 0.9rem; color: #94a3b8; }
+    label { display: block; font-size: 0.85rem; margin-bottom: 0.35rem; }
+    input, select {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border-radius: 6px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #e2e8f0;
+      margin-bottom: 0.75rem;
       font-size: 0.9rem;
     }
+    .row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    button {
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      border: none;
+      color: #fff;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    button.method-get { background: #16a34a; }
+    button.method-get:hover { background: #15803d; }
+    button.method-post { background: #3b82f6; }
+    button.method-post:hover { background: #2563eb; }
+    button.method-delete { background: #dc2626; }
+    button.method-delete:hover { background: #b91c1c; }
+    pre {
+      margin: 1rem 0 0;
+      padding: 1rem;
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 4rem;
+    }
+    code { font-family: ui-monospace, monospace; }
+    .enabled-true { color: #4ade80; font-weight: 600; }
+    .enabled-false { color: #f87171; font-weight: 600; }
   </style>
-</body>
+</head>
+<body>
+  <main>
+    <h1>Feature Flags API Playground</h1>
+    <p class="subtitle">Try the REST API from the browser. Responses appear below.</p>
 
+    <section>
+      <h2>1. Create <code>dark_mode</code></h2>
+      <p>Region segments: <code>us-east</code> off, <code>us-west</code> on. Others default off.</p>
+      <div class="row">
+        <button type="button" class="method-post" id="btn-create">POST /flags</button>
+        <button type="button" class="method-get" id="btn-list">GET /flags</button>
+        <button type="button" class="method-delete" id="btn-delete">DELETE /flags/dark_mode</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Evaluate <code>dark_mode</code></h2>
+      <label for="user-id">user_id</label>
+      <input id="user-id" type="text" value="u-1" />
+      <label for="region">region</label>
+      <select id="region">
+        <option value="us-west">us-west (on)</option>
+        <option value="us-east">us-east (off)</option>
+        <option value="eu-central">eu-central (default off)</option>
+      </select>
+      <button type="button" class="method-get" id="btn-evaluate">GET /flags/dark_mode/evaluate</button>
+    </section>
+
+    <section>
+      <h2>3. Health</h2>
+      <button type="button" class="method-get" id="btn-health">GET /health</button>
+    </section>
+
+    <pre id="output"><code>Click a button to send a request…</code></pre>
+  </main>
+
+  <script>
+    const output = document.getElementById("output");
+    const darkModePayload = {
+      name: "dark_mode",
+      default_state: false,
+      segment_key: "region",
+      segments: { "us-east": false, "us-west": true },
+    };
+
+    async function callApi(method, path, body) {
+      const options = { method, headers: {} };
+      if (body !== undefined) {
+        options.headers["Content-Type"] = "application/json";
+        options.body = JSON.stringify(body);
+      }
+
+      const started = performance.now();
+      let response;
+      let text;
+      try {
+        response = await fetch(path, options);
+        text = await response.text();
+      } catch (err) {
+        showResult(method, path, body, null, String(err), performance.now() - started);
+        return;
+      }
+
+      let parsed;
+      try {
+        parsed = text ? JSON.parse(text) : null;
+      } catch {
+        parsed = text;
+      }
+
+      showResult(method, path, body, response.status, parsed, performance.now() - started);
+    }
+
+    function showResult(method, path, body, status, data, ms) {
+      const lines = [
+        `${method} ${path}${status !== null ? ` → ${status}` : ""} (${ms.toFixed(0)}ms)`,
+      ];
+      if (body !== undefined) {
+        lines.push("", "Request:", JSON.stringify(body, null, 2));
+      }
+      lines.push("", "Response:", typeof data === "string" ? data : JSON.stringify(data, null, 2));
+
+      if (data && typeof data === "object" && "enabled" in data) {
+        const cls = data.enabled ? "enabled-true" : "enabled-false";
+        lines.push("", `→ enabled: ${data.enabled} (${data.source})`);
+        output.innerHTML = `<code>${escapeHtml(lines.join("\n"))}\n\n<span class="${cls}">enabled: ${data.enabled}</span>  source: ${data.source}</code>`;
+        return;
+      }
+
+      output.innerHTML = `<code>${escapeHtml(lines.join("\n"))}</code>`;
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    document.getElementById("btn-create").addEventListener("click", () => {
+      callApi("POST", "/flags", darkModePayload);
+    });
+    document.getElementById("btn-list").addEventListener("click", () => {
+      callApi("GET", "/flags");
+    });
+    document.getElementById("btn-delete").addEventListener("click", () => {
+      callApi("DELETE", "/flags/dark_mode");
+    });
+    document.getElementById("btn-evaluate").addEventListener("click", () => {
+      const params = new URLSearchParams({
+        user_id: document.getElementById("user-id").value,
+        region: document.getElementById("region").value,
+      });
+      callApi("GET", `/flags/dark_mode/evaluate?${params}`);
+    });
+    document.getElementById("btn-health").addEventListener("click", () => {
+      callApi("GET", "/health");
+    });
+  </script>
+</body>
 </html>

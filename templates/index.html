@@ -97,6 +97,12 @@
         <option value="us-east">us-east (off)</option>
         <option value="eu-central">eu-central (default off)</option>
       </select>
+      <label for="rollout-percent">Percentage rollout</label>
+      <div class="row">
+        <input id="rollout-percent" type="range" min="0" max="100" value="25" style="flex:1" />
+        <input id="rollout-num" type="number" min="0" max="100" value="25" style="width:96px" />
+      </div>
+      <p style="margin-top:0.25rem;font-size:0.85rem;color:#94a3b8">Local check: bucket <span id="rollout-bucket">—</span> → <strong id="rollout-local-result">—</strong></p>
       <button type="button" class="method-get" id="btn-evaluate">GET /flags/dark_mode/evaluate</button>
     </section>
 
@@ -117,7 +123,38 @@
       segments: { "us-east": false, "us-west": true },
     };
 
-    async function callApi(method, path, body) {
+    // --- crypto helpers (browser) ---
+    async function sha256Hex(str) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function bucketFromHex(hex) {
+      return parseInt(hex.slice(0, 8), 16) % 100;
+    }
+
+    async function getBucket(userId) {
+      if (!userId) return null;
+      const hex = await sha256Hex(String(userId));
+      return bucketFromHex(hex);
+    }
+
+    async function computeLocalRollout(userId) {
+      const bucket = await getBucket(userId);
+      const percent = Number(document.getElementById('rollout-num').value || 0);
+      const inRollout = bucket !== null && bucket < percent;
+      return { bucket, percent, inRollout };
+    }
+
+    async function updateRolloutDisplay() {
+      const userId = document.getElementById('user-id').value;
+      const info = await computeLocalRollout(userId);
+      document.getElementById('rollout-bucket').textContent = info.bucket === null ? '—' : info.bucket;
+      document.getElementById('rollout-local-result').textContent = info.inRollout ? `in rollout (${info.percent}%)` : `not in rollout (${info.percent}%)`;
+    }
+
+    // --- API call + display (accepts optional localInfo) ---
+    async function callApi(method, path, body, localInfo) {
       const options = { method, headers: {} };
       if (body !== undefined) {
         options.headers["Content-Type"] = "application/json";
@@ -131,7 +168,7 @@
         response = await fetch(path, options);
         text = await response.text();
       } catch (err) {
-        showResult(method, path, body, null, String(err), performance.now() - started);
+        showResult(method, path, body, null, String(err), performance.now() - started, localInfo);
         return;
       }
 
@@ -142,10 +179,10 @@
         parsed = text;
       }
 
-      showResult(method, path, body, response.status, parsed, performance.now() - started);
+      showResult(method, path, body, response.status, parsed, performance.now() - started, localInfo);
     }
 
-    function showResult(method, path, body, status, data, ms) {
+    function showResult(method, path, body, status, data, ms, localInfo) {
       const lines = [
         `${method} ${path}${status !== null ? ` → ${status}` : ""} (${ms.toFixed(0)}ms)`,
       ];
@@ -154,10 +191,19 @@
       }
       lines.push("", "Response:", typeof data === "string" ? data : JSON.stringify(data, null, 2));
 
+      if (localInfo) {
+        lines.push('', 'Local rollout check:', JSON.stringify(localInfo, null, 2));
+      }
+
       if (data && typeof data === "object" && "enabled" in data) {
         const cls = data.enabled ? "enabled-true" : "enabled-false";
         lines.push("", `→ enabled: ${data.enabled} (${data.source})`);
-        output.innerHTML = `<code>${escapeHtml(lines.join("\n"))}\n\n<span class="${cls}">enabled: ${data.enabled}</span>  source: ${data.source}</code>`;
+        let html = `<code>${escapeHtml(lines.join("\n"))}\n\n<span class="${cls}">enabled: ${data.enabled}</span>  source: ${data.source}</code>`;
+        if (localInfo) {
+          const localCls = localInfo.inRollout ? 'enabled-true' : 'enabled-false';
+          html += `\n\n<code>Local: <span class="${localCls}">${localInfo.inRollout}</span> bucket=${localInfo.bucket} percent=${localInfo.percent}</code>`;
+        }
+        output.innerHTML = html;
         return;
       }
 
@@ -171,6 +217,7 @@
         .replaceAll(">", "&gt;");
     }
 
+    // --- wire up buttons and inputs ---
     document.getElementById("btn-create").addEventListener("click", () => {
       callApi("POST", "/flags", darkModePayload);
     });
@@ -180,16 +227,27 @@
     document.getElementById("btn-delete").addEventListener("click", () => {
       callApi("DELETE", "/flags/dark_mode");
     });
-    document.getElementById("btn-evaluate").addEventListener("click", () => {
+    document.getElementById("btn-evaluate").addEventListener("click", async () => {
+      const userId = document.getElementById("user-id").value;
       const params = new URLSearchParams({
-        user_id: document.getElementById("user-id").value,
+        user_id: userId,
         region: document.getElementById("region").value,
       });
-      callApi("GET", `/flags/dark_mode/evaluate?${params}`);
+      const localInfo = await computeLocalRollout(userId);
+      callApi("GET", `/flags/dark_mode/evaluate?${params}`, undefined, localInfo);
     });
     document.getElementById("btn-health").addEventListener("click", () => {
       callApi("GET", "/health");
     });
+
+    // Range / number sync + initial update
+    const range = document.getElementById('rollout-percent');
+    const num = document.getElementById('rollout-num');
+    range.addEventListener('input', () => { num.value = range.value; updateRolloutDisplay(); });
+    num.addEventListener('input', () => { range.value = num.value; updateRolloutDisplay(); });
+    document.getElementById('user-id').addEventListener('input', updateRolloutDisplay);
+    // initial render
+    updateRolloutDisplay();
   </script>
 </body>
 </html>

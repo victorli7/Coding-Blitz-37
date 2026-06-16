@@ -89,12 +89,16 @@ def test_missing_region_uses_default(dark_mode_flag: FeatureFlag) -> None:
     assert result.source == "default"
 
 
-def test_db_fallback_labels_default_source(dark_mode_flag: FeatureFlag) -> None:
-    result = evaluate(
-        dark_mode_flag,
-        {"user_id": "u-3", "region": "eu-central"},
-        db_fallback=True,
+def test_unknown_region_uses_default_state_when_true() -> None:
+    flag = FeatureFlag(
+        name="beta_feature",
+        default_state=True,
+        segment_key="region",
+        segments={"us-west": True},
+        rollout_percent=25,
     )
 
-    assert result.enabled is False
-    assert result.source == "default_fallback"
+    result = evaluate(flag, {"region": "eu-central"})
+
+    assert result.enabled is True
+    assert result.source == "default"

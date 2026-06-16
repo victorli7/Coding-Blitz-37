@@ -49,13 +49,14 @@ class FlagService:
         flag, db_fallback = self._load_flag(name)
         if flag is None:
             if db_fallback:
+                # Conservative fallback when the DB is down and the flag is not cached.
                 return EvaluationResult(
                     flag=name,
                     enabled=False,
                     source="default_fallback",
                 )
             raise FlagNotFoundError(f"flag '{name}' not found")
-        return evaluate(flag, context, db_fallback=db_fallback)
+        return evaluate(flag, context)
 
     def _load_flag(self, name: str) -> tuple[FeatureFlag | None, bool]:
         cached = self.cache.get(name)

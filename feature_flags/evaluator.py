@@ -19,27 +19,17 @@ def _in_rollout(context: dict, percent: int | None = None) -> bool:
     return _rollout_bucket(str(user_id)) < int(pct)
 
 
-def evaluate(
-    flag: FeatureFlag,
-    context: dict,
-    *,
-    db_fallback: bool = False,
-) -> EvaluationResult:
-    # New semantics: a flag is enabled only when BOTH
-    #  - the user falls into the rollout bucket (by user_id hash), and
-    #  - the user's segment value is marked eligible (segment value exists and is True).
-    # Otherwise the flag is considered disabled. We still surface default/db_fallback
-    # when the segment key is missing from context or the flag cannot be loaded.
+def evaluate(flag: FeatureFlag, context: dict) -> EvaluationResult:
     segment_value = context.get(flag.segment_key)
-    in_rollout = _in_rollout(context, getattr(flag, "rollout_percent", None))
+    in_rollout = _in_rollout(context, flag.rollout_percent)
 
     if segment_value in flag.segments:
-        # If the segment explicitly marks eligibility, enable only when both conditions hold.
         if flag.segments[segment_value] and in_rollout:
             return EvaluationResult(flag=flag.name, enabled=True, source="segment_and_rollout")
         return EvaluationResult(flag=flag.name, enabled=False, source="segment")
 
-    # Segment value not present in flag.segments -> treat as not eligible.
-    # Return default fallback or default (disabled) depending on db availability.
-    source = "default_fallback" if db_fallback else "default"
-    return EvaluationResult(flag=flag.name, enabled=False, source=source)
+    return EvaluationResult(
+        flag=flag.name,
+        enabled=flag.default_state,
+        source="default",
+    )

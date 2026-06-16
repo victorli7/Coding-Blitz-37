@@ -14,14 +14,15 @@ flowchart LR
     DB --> Cache
     Cache --> Eval[Evaluator]
     Eval --> Response[enabled + source]
-    API -->|DB unavailable| Fallback[default_fallback]
+    API -->|DB unavailable, uncached| Fallback["enabled: false"]
 ```
 
 1. Client calls the evaluate endpoint with a user context (query parameters such as `region` and `user_id`).
 2. API loads the flag from the in-memory cache, or from the database on a cache miss.
 3. Evaluator checks whether the context's `segment_key` value (e.g. `region`) is marked eligible (`true`) in the flag's `segments` map.
 4. If eligible, the flag is enabled only when the user's `user_id` is also in that flag's rollout bucket (see [Percentage rollout](#percentage-rollout)); response `source` is `segment_and_rollout` when both pass, otherwise `segment` with `enabled: false`.
-5. Unknown or missing segment value → `enabled: false` with `source: default` (or `default_fallback` when the database is unavailable and the flag is not cached).
+5. Segment value not listed in `segments` (e.g. `eu-central`) or missing from context → `default_state` with `source: default`.
+6. Database unavailable and flag not cached → cannot load flag config; evaluate returns `enabled: false` with `source: default_fallback` (fail closed).
 
 Cache is updated on flag reads and invalidated on flag updates and deletes.
 
@@ -102,7 +103,7 @@ curl "http://127.0.0.1:5000/flags/dark_mode/evaluate?user_id=u-1&region=us-west"
 | `{ "region": "us-west", "user_id": "u-1" }` | `enabled: false` | `segment` (eligible region, outside rollout bucket) |
 | `{ "region": "us-west", "user_id": "user-2" }` | `enabled: true` | `segment_and_rollout` |
 | `{ "region": "us-east", "user_id": "user-2" }` | `enabled: false` | `segment` (region not eligible; rollout does not override) |
-| `{ "region": "eu-central" }` | `enabled: false` | `default` |
+| `{ "region": "eu-central" }` | `enabled: false` | `default` (`default_state` for unlisted regions) |
 | `{ "user_id": "u-3" }` (no region) | `enabled: false` | `default` |
 
 ```bash
@@ -130,6 +131,8 @@ A flag is enabled only when **both** conditions hold:
 If the segment is eligible but the user is outside the rollout bucket, the flag stays off (`source: segment`). Rollout does not enable users in segments marked `false`. Without a `user_id` in the context, rollout never applies.
 
 Set `rollout_percent` to `0` to disable rollout gating for that flag; set it to `100` to include every user that has a `user_id`.
+
+**`default_state`** applies when the context segment value is missing or not listed in `segments` (e.g. `eu-central`). Rollout does not apply on that path — only explicit segment matches are rollout-gated.
 
 ## CI/CD
 

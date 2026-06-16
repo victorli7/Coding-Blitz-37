@@ -8,7 +8,18 @@ services:
     github:
       repo: victorli7/Coding-Blitz-37
       branch: main
+      deploy_on_push: false
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME
         value: ${db.DATABASE_URL}
+ingress:
+  rules:
+    - component:
+        name: web
+      match:
+        path:
+          prefix: /

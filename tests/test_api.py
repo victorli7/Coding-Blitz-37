@@ -65,9 +65,10 @@ def test_evaluate_us_west(client) -> None:
     )
 
     assert response.status_code == 200
+    # New semantics: requires both rollout bucket and eligible segment
     assert response.get_json() == {
         "flag": "dark_mode",
-        "enabled": True,
+        "enabled": False,
         "source": "segment",
     }
 
@@ -95,10 +96,11 @@ def test_evaluate_rollout_enables_us_east(client) -> None:
     )
 
     assert response.status_code == 200
+    # New semantics: region not eligible, rollout alone doesn't enable
     assert response.get_json() == {
         "flag": "dark_mode",
-        "enabled": True,
-        "source": "rollout",
+        "enabled": False,
+        "source": "segment",
     }
 
 

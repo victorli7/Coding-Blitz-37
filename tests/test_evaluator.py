@@ -9,7 +9,8 @@ def test_us_west_enables_dark_mode(dark_mode_flag: FeatureFlag) -> None:
     )
 
     assert result.flag == "dark_mode"
-    assert result.enabled is True
+    # New semantics: requires both rollout bucket and eligible segment
+    assert result.enabled is False
     assert result.source == "segment"
 
 
@@ -29,8 +30,9 @@ def test_rollout_enables_us_east_when_in_bucket(dark_mode_flag: FeatureFlag) -> 
         {"user_id": "user-2", "region": "us-east"},
     )
 
-    assert result.enabled is True
-    assert result.source == "rollout"
+    # New semantics: region explicitly not eligible, so rollout alone doesn't enable
+    assert result.enabled is False
+    assert result.source == "segment"
 
 
 def test_rollout_is_deterministic(dark_mode_flag: FeatureFlag) -> None:
@@ -47,8 +49,9 @@ def test_rollout_enables_unknown_region_when_in_bucket(dark_mode_flag: FeatureFl
         {"user_id": "user-2", "region": "eu-central"},
     )
 
-    assert result.enabled is True
-    assert result.source == "rollout"
+    # New semantics: unknown region is not eligible -> falls back to default
+    assert result.enabled is False
+    assert result.source == "default"
 
 
 def test_rollout_skipped_when_segment_enabled(dark_mode_flag: FeatureFlag) -> None:
@@ -57,8 +60,9 @@ def test_rollout_skipped_when_segment_enabled(dark_mode_flag: FeatureFlag) -> No
         {"user_id": "user-2", "region": "us-west"},
     )
 
+    # When both segment is eligible and user is in rollout, mark as segment_and_rollout
     assert result.enabled is True
-    assert result.source == "segment"
+    assert result.source == "segment_and_rollout"
 
 
 def test_rollout_requires_user_id(dark_mode_flag: FeatureFlag) -> None:

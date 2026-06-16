@@ -60,7 +60,8 @@ curl -X POST http://127.0.0.1:5000/flags \
     "name": "dark_mode",
     "default_state": false,
     "segment_key": "region",
-    "segments": { "us-east": false, "us-west": true }
+    "segments": { "us-east": false, "us-west": true },
+    "rollout_percent": 25
   }'
 ```
 
@@ -89,7 +90,7 @@ curl "http://127.0.0.1:5000/flags/dark_mode/evaluate?user_id=u-1&region=us-west"
 ```json
 {
   "flag": "dark_mode",
-  "enabled": true,
+  "enabled": false,
   "source": "segment"
 }
 ```
@@ -99,7 +100,8 @@ curl "http://127.0.0.1:5000/flags/dark_mode/evaluate?user_id=u-1&region=us-west"
 | Context | Result | `source` |
 |---------|--------|----------|
 | `{ "region": "us-east", "user_id": "user-0" }` | `enabled: false` | `segment` |
-| `{ "region": "us-east", "user_id": "user-2" }` | `enabled: true` | `rollout` |
+| `{ "region": "us-east", "user_id": "user-2" }` | `enabled: false` | `segment` |
+| `{ "region": "us-west", "user_id": "user-2" }` | `enabled: true` | `segment_and_rollout` |
 | `{ "region": "eu-central" }` | `enabled: false` | `default` |
 | `{ "user_id": "u-3" }` (no region) | `enabled: false` | `default` |
 
@@ -111,7 +113,7 @@ curl "http://127.0.0.1:5000/flags/dark_mode/evaluate?region=eu-central"
 
 ## Extensions
 
-**Percentage rollout:** When a segment or default would disable the flag, users with a `user_id` in the rollout bucket are enabled instead. Assignment is deterministic: `sha256(user_id) % 100 < 25`. Same user always gets the same result. Response `source` is `rollout` when rollout applies; segment rules that already enable the flag are unchanged.
+**Percentage rollout (per-flag):** Each flag may include a `rollout_percent` integer (0-100) that controls a deterministic percentage rollout based on `user_id`. Current semantics: a flag is enabled only when both (1) the user's `user_id` falls into the flag's rollout bucket (deterministic hash) and (2) the user's segment value (for example `region`) is marked eligible in the flag's `segments` map. The hash is computed as `sha256(user_id)` and the bucket is `int(hex[:8],16) % 100`. If both conditions hold the response `source` will be `segment_and_rollout`. If the segment explicitly enables the flag but the user is not in the rollout, the source is `segment`. If the segment would disable the flag (or is unknown) the default rules apply and the source may be `default` or `default_fallback` when the DB is unavailable.
 
 ## CI/CD
 

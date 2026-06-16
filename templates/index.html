@@ -90,19 +90,18 @@
     <section>
       <h2>2. Evaluate <code>dark_mode</code></h2>
       <label for="user-id">user_id</label>
-      <input id="user-id" type="text" value="u-1" />
+      <select id="user-id">
+        <option value="u-1">u-1</option>
+        <option value="u-2">u-2</option>
+      </select>
       <label for="region">region</label>
       <select id="region">
         <option value="us-west">us-west (on)</option>
         <option value="us-east">us-east (off)</option>
         <option value="eu-central">eu-central (default off)</option>
       </select>
-      <label for="rollout-percent">Percentage rollout</label>
-      <div class="row">
-        <input id="rollout-percent" type="range" min="0" max="100" value="25" style="flex:1" />
-        <input id="rollout-num" type="number" min="0" max="100" value="25" style="width:96px" />
-      </div>
-      <p style="margin-top:0.25rem;font-size:0.85rem;color:#94a3b8">Local check: bucket <span id="rollout-bucket">—</span> → <strong id="rollout-local-result">—</strong></p>
+      <p style="margin-top:0.25rem;font-size:0.95rem;color:#94a3b8">Rollout: <strong id="rollout-fixed">25%</strong></p>
+      
       <button type="button" class="method-get" id="btn-evaluate">GET /flags/dark_mode/evaluate</button>
     </section>
 
@@ -116,48 +115,22 @@
 
   <script>
     const output = document.getElementById("output");
+    const DEFAULT_ROLLOUT_PERCENT = 25;
+
     function makeDarkModePayload() {
       return {
         name: "dark_mode",
         default_state: false,
         segment_key: "region",
         segments: { "us-east": false, "us-west": true },
-        rollout_percent: Number(document.getElementById('rollout-num').value || 0),
+        rollout_percent: DEFAULT_ROLLOUT_PERCENT,
       };
     }
 
-    // --- crypto helpers (browser) ---
-    async function sha256Hex(str) {
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    function bucketFromHex(hex) {
-      return parseInt(hex.slice(0, 8), 16) % 100;
-    }
-
-    async function getBucket(userId) {
-      if (!userId) return null;
-      const hex = await sha256Hex(String(userId));
-      return bucketFromHex(hex);
-    }
-
-    async function computeLocalRollout(userId) {
-      const bucket = await getBucket(userId);
-      const percent = Number(document.getElementById('rollout-num').value || 0);
-      const inRollout = bucket !== null && bucket < percent;
-      return { bucket, percent, inRollout };
-    }
-
-    async function updateRolloutDisplay() {
-      const userId = document.getElementById('user-id').value;
-      const info = await computeLocalRollout(userId);
-      document.getElementById('rollout-bucket').textContent = info.bucket === null ? '—' : info.bucket;
-      document.getElementById('rollout-local-result').textContent = info.inRollout ? `in rollout (${info.percent}%)` : `not in rollout (${info.percent}%)`;
-    }
+    
 
     // --- API call + display (accepts optional localInfo) ---
-    async function callApi(method, path, body, localInfo) {
+    async function callApi(method, path, body) {
       const options = { method, headers: {} };
       if (body !== undefined) {
         options.headers["Content-Type"] = "application/json";
@@ -182,10 +155,10 @@
         parsed = text;
       }
 
-      showResult(method, path, body, response.status, parsed, performance.now() - started, localInfo);
+      showResult(method, path, body, response.status, parsed, performance.now() - started);
     }
 
-    function showResult(method, path, body, status, data, ms, localInfo) {
+    function showResult(method, path, body, status, data, ms) {
       const lines = [
         `${method} ${path}${status !== null ? ` → ${status}` : ""} (${ms.toFixed(0)}ms)`,
       ];
@@ -194,18 +167,11 @@
       }
       lines.push("", "Response:", typeof data === "string" ? data : JSON.stringify(data, null, 2));
 
-      if (localInfo) {
-        lines.push('', 'Local rollout check:', JSON.stringify(localInfo, null, 2));
-      }
-
       if (data && typeof data === "object" && "enabled" in data) {
         const cls = data.enabled ? "enabled-true" : "enabled-false";
         lines.push("", `→ enabled: ${data.enabled} (${data.source})`);
         let html = `<code>${escapeHtml(lines.join("\n"))}\n\n<span class="${cls}">enabled: ${data.enabled}</span>  source: ${data.source}</code>`;
-        if (localInfo) {
-          const localCls = localInfo.inRollout ? 'enabled-true' : 'enabled-false';
-          html += `\n\n<code>Local: <span class="${localCls}">${localInfo.inRollout}</span> bucket=${localInfo.bucket} percent=${localInfo.percent}</code>`;
-        }
+        
         output.innerHTML = html;
         return;
       }
@@ -243,14 +209,48 @@
       callApi("GET", "/health");
     });
 
-    // Range / number sync + initial update
-    const range = document.getElementById('rollout-percent');
-    const num = document.getElementById('rollout-num');
-    range.addEventListener('input', () => { num.value = range.value; updateRolloutDisplay(); });
-    num.addEventListener('input', () => { range.value = num.value; updateRolloutDisplay(); });
-    document.getElementById('user-id').addEventListener('input', updateRolloutDisplay);
-    // initial render
-    updateRolloutDisplay();
+    // initial update and wire user dropdown text to show rollout status
+    const userEl = document.getElementById('user-id');
+    // minimal client-side helpers to label user options (no local evaluation display)
+    async function sha256Hex(str) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function bucketFromHex(hex) {
+      return parseInt(hex.slice(0, 8), 16) % 100;
+    }
+
+    async function getBucket(userId) {
+      if (!userId) return null;
+      const hex = await sha256Hex(String(userId));
+      return bucketFromHex(hex);
+    }
+
+    async function computeLocalRollout(userId) {
+      const bucket = await getBucket(userId);
+      const percent = DEFAULT_ROLLOUT_PERCENT;
+      const inRollout = bucket !== null && bucket < percent;
+      return { bucket, percent, inRollout };
+    }
+
+    async function refreshUserOptions() {
+      const opts = Array.from(userEl.options);
+      for (const opt of opts) {
+        const uid = opt.value;
+        const info = await computeLocalRollout(uid);
+        opt.textContent = `${uid} (${info.inRollout ? 'in rollout' : 'not in rollout'})`;
+      }
+    }
+
+    userEl.addEventListener('change', async () => {
+      await refreshUserOptions();
+    });
+
+    (async () => {
+      document.getElementById('rollout-fixed').textContent = `${DEFAULT_ROLLOUT_PERCENT}%`;
+      await refreshUserOptions();
+    })();
   </script>
 </body>
 </html>

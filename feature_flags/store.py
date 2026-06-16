@@ -62,6 +62,13 @@ class SqliteFlagStore:
                     )
                     """
                 )
+                # Ensure older DB files get the new column
+                cur = conn.execute("PRAGMA table_info('flags')")
+                cols = [row[1] for row in cur.fetchall()]
+                if 'rollout_percent' not in cols:
+                    conn.execute(
+                        "ALTER TABLE flags ADD COLUMN rollout_percent INTEGER NOT NULL DEFAULT 0"
+                    )
         except sqlite3.Error as exc:
             raise FlagStoreError("failed to initialize database") from exc
 

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Literal
 
-EvaluationSource = Literal["segment", "default", "default_fallback"]
+EvaluationSource = Literal["segment", "default", "default_fallback", "rollout"]
 
 
 @dataclass(frozen=True)

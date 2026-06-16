@@ -76,7 +76,7 @@ def test_evaluate_us_east(client) -> None:
     client.post("/flags", json=DARK_MODE_PAYLOAD)
 
     response = client.get(
-        "/flags/dark_mode/evaluate?user_id=u-2&region=us-east",
+        "/flags/dark_mode/evaluate?user_id=user-0&region=us-east",
     )
 
     assert response.status_code == 200
@@ -84,6 +84,21 @@ def test_evaluate_us_east(client) -> None:
         "flag": "dark_mode",
         "enabled": False,
         "source": "segment",
+    }
+
+
+def test_evaluate_rollout_enables_us_east(client) -> None:
+    client.post("/flags", json=DARK_MODE_PAYLOAD)
+
+    response = client.get(
+        "/flags/dark_mode/evaluate?user_id=user-2&region=us-east",
+    )
+
+    assert response.status_code == 200
+    assert response.get_json() == {
+        "flag": "dark_mode",
+        "enabled": True,
+        "source": "rollout",
     }
 
 

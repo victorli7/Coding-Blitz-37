@@ -98,14 +98,20 @@ curl "http://127.0.0.1:5000/flags/dark_mode/evaluate?user_id=u-1&region=us-west"
 
 | Context | Result | `source` |
 |---------|--------|----------|
-| `{ "region": "us-east" }` | `enabled: false` | `segment` |
+| `{ "region": "us-east", "user_id": "user-0" }` | `enabled: false` | `segment` |
+| `{ "region": "us-east", "user_id": "user-2" }` | `enabled: true` | `rollout` |
 | `{ "region": "eu-central" }` | `enabled: false` | `default` |
-| `{ "user_id": "u-2" }` (no region) | `enabled: false` | `default` |
+| `{ "user_id": "u-3" }` (no region) | `enabled: false` | `default` |
 
 ```bash
-curl "http://127.0.0.1:5000/flags/dark_mode/evaluate?region=us-east"
+curl "http://127.0.0.1:5000/flags/dark_mode/evaluate?region=us-east&user_id=user-0"
+curl "http://127.0.0.1:5000/flags/dark_mode/evaluate?region=us-east&user_id=user-2"
 curl "http://127.0.0.1:5000/flags/dark_mode/evaluate?region=eu-central"
 ```
+
+## Extensions
+
+**Percentage rollout:** When a segment or default would disable the flag, users with a `user_id` in the rollout bucket are enabled instead. Assignment is deterministic: `sha256(user_id) % 100 < 25`. Same user always gets the same result. Response `source` is `rollout` when rollout applies; segment rules that already enable the flag are unchanged.
 
 ## CI/CD
 

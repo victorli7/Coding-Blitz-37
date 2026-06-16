@@ -1,6 +1,14 @@
 name: coding-blitz-37
+databases:
+  - name: db
+    engine: PG
+    version: "16"
 services:
-- name: web
-  github:
-    repo: victorli7/Coding-Blitz-37
-    branch: main
+  - name: web
+    github:
+      repo: victorli7/Coding-Blitz-37
+      branch: main
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}

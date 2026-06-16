@@ -3,25 +3,15 @@ import json
 import pytest
 
 from app import create_app
+from tests.conftest import DARK_MODE_PAYLOAD
 
 
 @pytest.fixture
 def client(tmp_path):
-    app = create_app(db_path=tmp_path / "test.db")
+    app = create_app(db_path=tmp_path / "test.db", database_url="")
     app.config["TESTING"] = True
     with app.test_client() as test_client:
         yield test_client
-
-
-DARK_MODE_PAYLOAD = {
-    "name": "dark_mode",
-    "default_state": False,
-    "segment_key": "region",
-    "segments": {
-        "us-east": False,
-        "us-west": True,
-    },
-}
 
 
 def test_health(client) -> None:

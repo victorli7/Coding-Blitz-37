@@ -1,58 +1,123 @@
-## Get Started
+# Feature Flags API
 
-This guide describes how to deploy this Flask application to [DigitalOcean App Platform](https://www.digitalocean.com/products/app-platform).
+REST API for boolean feature flags with regional segmentation, in-memory caching, and persistent storage. Includes flag CRUD, contextual evaluation, a browser playground, Postgres on DigitalOcean App Platform, and GitHub Actions CI/CD.
 
-This repo is a fork of [digitalocean/sample-flask](https://github.com/digitalocean/sample-flask).
+## Architecture
 
-**Note**: Following these steps may result in charges for the use of DigitalOcean services.
+Request lifecycle, caching layer, and storage layer:
 
-### Requirements
+```mermaid
+flowchart LR
+    Client -->|HTTP| API[Flask API]
+    API --> Cache[In-memory cache]
+    Cache -->|miss| DB[(Database)]
+    DB --> Cache
+    Cache --> Eval[Evaluator]
+    Eval --> Response[enabled + source]
+    API -->|DB unavailable| Fallback[default_state]
+```
 
-* You need a DigitalOcean account. If you do not already have one, first [sign up](https://cloud.digitalocean.com/registrations/new).
+1. Client calls the evaluate endpoint with a user context (query parameters).
+2. API loads the flag from the in-memory cache, or from the database on a cache miss.
+3. Evaluator matches `segment_key` against the context (e.g. `region`) using the flag's `segments` map.
+4. Known segment → boolean result; unknown or missing → `default_state`.
+5. If the database is unavailable and the flag is not cached → `default_state` with `source: default_fallback`.
 
-## Deploy the App
+Cache is updated on flag reads and invalidated on flag updates and deletes.
 
-Click the following button to deploy this repo to App Platform. If you are not currently logged in with your DigitalOcean account, this button prompts you to log in.
+## API
 
-[![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/victorli7/Coding-Blitz-37/tree/main)
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` | Liveness check |
+| `GET` | `/flags` | List flags |
+| `POST` | `/flags` | Create a flag |
+| `GET` | `/flags/{name}` | Get a flag |
+| `PUT` | `/flags/{name}` | Update a flag |
+| `DELETE` | `/flags/{name}` | Delete a flag |
+| `GET` | `/flags/{name}/evaluate?...` | Evaluate for context |
+| `GET` | `/` | Browser playground |
 
-Pushes to the `main` branch automatically redeploy the app when **Autodeploy** is enabled.
+## Setup
 
-Alternatively, visit the [control panel](https://cloud.digitalocean.com/apps) and click **Create App**. Under **Service Provider**, select **GitHub**, then choose **victorli7/Coding-Blitz-37**. Set the branch to **main** and ensure **Autodeploy** is checked, then click **Next**.
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
 
-After starting the deploy, follow these steps:
+flask --app app run --debug
+pytest
+```
 
-1. Configure the app, such as by specifying HTTP routes, declaring environment variables, or adding a database. For the purposes of this tutorial, this step is optional.
-1. Provide a name for your app and select the region to deploy your app to, then click **Next**. By default, App Platform selects the region closest to you. Unless your app needs to interface with external services, your chosen region does not affect the app's performance, since all App Platform apps are routed through a global CDN.
-1. On the following screen, leave all the fields as they are and click **Next**.
-1. Confirm your plan settings and how many containers you want to launch and click **Launch Basic/Pro App**.
+Locally the app uses SQLite (`flags.db`). On App Platform, `DATABASE_URL` from [`.do/app.yaml`](.do/app.yaml) connects to Postgres.
 
-After, you should see a "Building..." progress indicator. You can click **View Logs** to see more details of the build. It can take a few minutes for the build to finish, but you can follow the progress in the **Deployments** tab.
+Create a flag before evaluating (example: `dark_mode` segmented by `region`):
 
-Once the build completes successfully, click the **Live App** link in the header and you should see your running application in a new tab, displaying the home page.
+```bash
+curl -X POST http://127.0.0.1:5000/flags \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "dark_mode",
+    "default_state": false,
+    "segment_key": "region",
+    "segments": { "us-east": false, "us-west": true }
+  }'
+```
 
+Open `http://127.0.0.1:5000/` for the playground UI (create, list, evaluate, health).
 
-## Make Changes to Your App
+## Evaluation payload examples
 
-Pushing a new change to `main` automatically redeploys the app to App Platform with zero downtime.
+Evaluate with a user context via query parameters on:
 
-Here's an example code change you can make for this app:
+`GET /flags/{name}/evaluate`
 
-1. Edit `templates/index.html` and replace "Welcome to your new Flask App!" with a different greeting
-1. Commit the change to the `main` branch. Normally it's a better practice to create a new branch for your change and then merge that branch to `main` after review, but for this demo you can commit to the `main` branch directly.
-1. Visit the [control panel](https://cloud.digitalocean.com/apps) and navigate to your app.
-1. You should see a "Building..." progress indicator, just like when you first created the app.
-1. Once the build completes successfully, click the **Live App** link in the header and you should see your updated application running. You may need to force refresh the page in your browser (e.g. using **Shift** + **Reload**).
+**Context (conceptual):**
 
-## Learn More
+```json
+{ "user_id": "u-1", "region": "us-west" }
+```
 
-To learn more about App Platform and how to manage and update your application, see [our App Platform documentation](https://www.digitalocean.com/docs/app-platform/).
+**Request:**
 
-## Delete the App
+```bash
+curl "http://127.0.0.1:5000/flags/dark_mode/evaluate?user_id=u-1&region=us-west"
+```
 
-When you no longer need this application running live, you can delete it by following these steps:
-1. Visit the [Apps control panel](https://cloud.digitalocean.com/apps).
-2. Navigate to the app.
-3. In the **Settings** tab, click **Destroy**.
+**Response:**
 
-**Note**: If you do not delete your app, charges for using DigitalOcean services will continue to accrue.
+```json
+{
+  "flag": "dark_mode",
+  "enabled": true,
+  "source": "segment"
+}
+```
+
+**More examples:**
+
+| Context | Result | `source` |
+|---------|--------|----------|
+| `{ "region": "us-east" }` | `enabled: false` | `segment` |
+| `{ "region": "eu-central" }` | `enabled: false` | `default` |
+| `{ "user_id": "u-2" }` (no region) | `enabled: false` | `default` |
+
+```bash
+curl "http://127.0.0.1:5000/flags/dark_mode/evaluate?region=us-east"
+curl "http://127.0.0.1:5000/flags/dark_mode/evaluate?region=eu-central"
+```
+
+## CI/CD
+
+[`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml):
+
+- **Push and pull requests to `main`:** run `pytest`
+- **Push to `main`:** deploy to App Platform via `digitalocean/app_action/deploy@v2`, applying [`.do/app.yaml`](.do/app.yaml)
+
+Add a repository secret `DIGITALOCEAN_ACCESS_TOKEN` (DigitalOcean API token with Apps access). App spec sets `deploy_on_push: false`; GitHub Actions owns deploys.
+
+Verify a deployed app:
+
+```bash
+APP_URL=https://your-app.ondigitalocean.app ./scripts/verify_do_postgres.sh
+```

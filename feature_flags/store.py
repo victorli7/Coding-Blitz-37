@@ -57,7 +57,8 @@ class SqliteFlagStore:
                         name TEXT PRIMARY KEY,
                         default_state INTEGER NOT NULL,
                         segment_key TEXT NOT NULL,
-                        segments TEXT NOT NULL
+                        segments TEXT NOT NULL,
+                        rollout_percent INTEGER NOT NULL DEFAULT 0
                     )
                     """
                 )
@@ -70,13 +71,14 @@ class SqliteFlagStore:
             default_state=bool(row["default_state"]),
             segment_key=row["segment_key"],
             segments=_segments_from_row(row["segments"]),
+            rollout_percent=int(row["rollout_percent"] or 0),
         )
 
     def list_all(self) -> list[FeatureFlag]:
         try:
             with self._connect() as conn:
                 rows = conn.execute(
-                    "SELECT name, default_state, segment_key, segments FROM flags ORDER BY name"
+                    "SELECT name, default_state, segment_key, segments, rollout_percent FROM flags ORDER BY name"
                 ).fetchall()
         except sqlite3.Error as exc:
             raise FlagStoreError("failed to list flags") from exc
@@ -86,7 +88,7 @@ class SqliteFlagStore:
         try:
             with self._connect() as conn:
                 row = conn.execute(
-                    "SELECT name, default_state, segment_key, segments FROM flags WHERE name = ?",
+                    "SELECT name, default_state, segment_key, segments, rollout_percent FROM flags WHERE name = ?",
                     (name,),
                 ).fetchone()
         except sqlite3.Error as exc:
@@ -100,14 +102,15 @@ class SqliteFlagStore:
             with self._connect() as conn:
                 conn.execute(
                     """
-                    INSERT INTO flags (name, default_state, segment_key, segments)
-                    VALUES (?, ?, ?, ?)
+                    INSERT INTO flags (name, default_state, segment_key, segments, rollout_percent)
+                    VALUES (?, ?, ?, ?, ?)
                     """,
                     (
                         flag.name,
                         int(flag.default_state),
                         flag.segment_key,
                         json.dumps(flag.segments),
+                        int(flag.rollout_percent),
                     ),
                 )
         except sqlite3.IntegrityError as exc:
@@ -122,13 +125,14 @@ class SqliteFlagStore:
                 cursor = conn.execute(
                     """
                     UPDATE flags
-                    SET default_state = ?, segment_key = ?, segments = ?
+                    SET default_state = ?, segment_key = ?, segments = ?, rollout_percent = ?
                     WHERE name = ?
                     """,
                     (
                         int(flag.default_state),
                         flag.segment_key,
                         json.dumps(flag.segments),
+                        int(flag.rollout_percent),
                         flag.name,
                     ),
                 )
@@ -164,9 +168,14 @@ class PostgresFlagStore:
                         name TEXT PRIMARY KEY,
                         default_state BOOLEAN NOT NULL,
                         segment_key TEXT NOT NULL,
-                        segments JSONB NOT NULL
+                        segments JSONB NOT NULL,
+                        rollout_percent INTEGER NOT NULL DEFAULT 0
                     )
                     """
+                )
+                # ensure column exists for upgrades
+                conn.execute(
+                    "ALTER TABLE flags ADD COLUMN IF NOT EXISTS rollout_percent INTEGER NOT NULL DEFAULT 0"
                 )
         except psycopg.Error as exc:
             raise FlagStoreError("failed to initialize database") from exc
@@ -177,13 +186,14 @@ class PostgresFlagStore:
             default_state=bool(row[1]),
             segment_key=row[2],
             segments=_segments_from_row(row[3]),
+            rollout_percent=int(row[4] or 0),
         )
 
     def list_all(self) -> list[FeatureFlag]:
         try:
             with self._connect() as conn:
                 rows = conn.execute(
-                    "SELECT name, default_state, segment_key, segments FROM flags ORDER BY name"
+                    "SELECT name, default_state, segment_key, segments, rollout_percent FROM flags ORDER BY name"
                 ).fetchall()
         except psycopg.Error as exc:
             raise FlagStoreError("failed to list flags") from exc
@@ -193,7 +203,7 @@ class PostgresFlagStore:
         try:
             with self._connect() as conn:
                 row = conn.execute(
-                    "SELECT name, default_state, segment_key, segments FROM flags WHERE name = %s",
+                    "SELECT name, default_state, segment_key, segments, rollout_percent FROM flags WHERE name = %s",
                     (name,),
                 ).fetchone()
         except psycopg.Error as exc:
@@ -207,14 +217,15 @@ class PostgresFlagStore:
             with self._connect() as conn:
                 conn.execute(
                     """
-                    INSERT INTO flags (name, default_state, segment_key, segments)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO flags (name, default_state, segment_key, segments, rollout_percent)
+                    VALUES (%s, %s, %s, %s, %s)
                     """,
                     (
                         flag.name,
                         flag.default_state,
                         flag.segment_key,
                         Jsonb(flag.segments),
+                        int(flag.rollout_percent),
                     ),
                 )
         except psycopg.errors.UniqueViolation as exc:
@@ -229,13 +240,14 @@ class PostgresFlagStore:
                 cursor = conn.execute(
                     """
                     UPDATE flags
-                    SET default_state = %s, segment_key = %s, segments = %s
+                    SET default_state = %s, segment_key = %s, segments = %s, rollout_percent = %s
                     WHERE name = %s
                     """,
                     (
                         flag.default_state,
                         flag.segment_key,
                         Jsonb(flag.segments),
+                        int(flag.rollout_percent),
                         flag.name,
                     ),
                 )

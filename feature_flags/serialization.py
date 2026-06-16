@@ -7,6 +7,7 @@ def flag_to_dict(flag: FeatureFlag) -> dict:
         "default_state": flag.default_state,
         "segment_key": flag.segment_key,
         "segments": flag.segments,
+        "rollout_percent": flag.rollout_percent,
     }
 
 
@@ -34,9 +35,16 @@ def flag_from_dict(data: dict) -> FeatureFlag:
     if not isinstance(segments, dict):
         raise ValueError("segments must be an object")
 
+    rollout = data.get("rollout_percent", 0)
+    if not isinstance(rollout, int):
+        raise ValueError("rollout_percent must be an integer")
+    if not (0 <= rollout <= 100):
+        raise ValueError("rollout_percent must be between 0 and 100")
+
     return FeatureFlag(
         name=str(data["name"]),
         default_state=data["default_state"],
         segment_key=str(data["segment_key"]),
         segments={str(key): bool(value) for key, value in segments.items()},
+        rollout_percent=rollout,
     )

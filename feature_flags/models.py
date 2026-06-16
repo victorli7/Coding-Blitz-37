@@ -10,6 +10,7 @@ class FeatureFlag:
     default_state: bool
     segment_key: str
     segments: dict[str, bool]
+    rollout_percent: int = 0
 
     def __post_init__(self) -> None:
         if not self.name:
@@ -25,6 +26,10 @@ class FeatureFlag:
                 raise ValueError("segment keys must not be empty")
             if not isinstance(value, bool):
                 raise ValueError("segment values must be booleans")
+        if not isinstance(self.rollout_percent, int):
+            raise ValueError("rollout_percent must be an integer")
+        if not (0 <= self.rollout_percent <= 100):
+            raise ValueError("rollout_percent must be between 0 and 100")
 
 
 @dataclass(frozen=True)

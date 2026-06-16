@@ -11,6 +11,7 @@ DARK_MODE_PAYLOAD = {
         "us-east": False,
         "us-west": True,
     },
+    "rollout_percent": 25,
 }
 
 
@@ -24,4 +25,5 @@ def dark_mode_flag() -> FeatureFlag:
             "us-east": False,
             "us-west": True,
         },
+        rollout_percent=25,
     )

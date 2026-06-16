@@ -116,12 +116,15 @@
 
   <script>
     const output = document.getElementById("output");
-    const darkModePayload = {
-      name: "dark_mode",
-      default_state: false,
-      segment_key: "region",
-      segments: { "us-east": false, "us-west": true },
-    };
+    function makeDarkModePayload() {
+      return {
+        name: "dark_mode",
+        default_state: false,
+        segment_key: "region",
+        segments: { "us-east": false, "us-west": true },
+        rollout_percent: Number(document.getElementById('rollout-num').value || 0),
+      };
+    }
 
     // --- crypto helpers (browser) ---
     async function sha256Hex(str) {
@@ -219,7 +222,7 @@
 
     // --- wire up buttons and inputs ---
     document.getElementById("btn-create").addEventListener("click", () => {
-      callApi("POST", "/flags", darkModePayload);
+      callApi("POST", "/flags", makeDarkModePayload());
     });
     document.getElementById("btn-list").addEventListener("click", () => {
       callApi("GET", "/flags");

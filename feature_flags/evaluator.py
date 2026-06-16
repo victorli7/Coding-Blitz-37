@@ -11,11 +11,12 @@ def _rollout_bucket(user_id: str) -> int:
     return int(digest[:8], 16) % 100
 
 
-def _in_rollout(context: dict) -> bool:
+def _in_rollout(context: dict, percent: int | None = None) -> bool:
     user_id = context.get(ROLLOUT_KEY)
     if user_id is None:
         return False
-    return _rollout_bucket(str(user_id)) < ROLLOUT_PERCENT
+    pct = ROLLOUT_PERCENT if percent is None else percent
+    return _rollout_bucket(str(user_id)) < int(pct)
 
 
 def evaluate(
@@ -32,7 +33,7 @@ def evaluate(
                 enabled=True,
                 source="segment",
             )
-        if _in_rollout(context):
+        if _in_rollout(context, getattr(flag, "rollout_percent", None)):
             return EvaluationResult(
                 flag=flag.name,
                 enabled=True,
@@ -52,7 +53,7 @@ def evaluate(
             source=source,
         )
 
-    if _in_rollout(context):
+    if _in_rollout(context, getattr(flag, "rollout_percent", None)):
         return EvaluationResult(
             flag=flag.name,
             enabled=True,

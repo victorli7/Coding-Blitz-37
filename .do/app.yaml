@@ -1,6 +1,6 @@
-name: sample-flask
+name: coding-blitz-37
 services:
 - name: web
   github:
-    repo: digitalocean/sample-flask
+    repo: victorli7/Coding-Blitz-37
     branch: main
